@@ -26,7 +26,7 @@ pub struct ServiceInner<Store> {
 }
 
 impl<Store: Storage> Service<Store> {
-    fn new(store: Store) -> Self {
+    pub fn new(store: Store) -> Self {
         Self {
             inner: Arc::new(ServiceInner { store })
         }
