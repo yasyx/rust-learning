@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
 
     client.send(cmd).await?;
 
-    if let Some(Ok(data)) = client.next().await? {
+    if let Some(Ok(data)) = client.next().await {
         info!("Got response {:?}", data)
     }
 

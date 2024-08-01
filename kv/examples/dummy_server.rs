@@ -10,20 +10,23 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let addr = "127.0.0.1:9527";
     let listener = TcpListener::bind(addr).await?;
-    info!("start listening on {}",addr);
+    info!("Start listening on {}", addr);
     loop {
         let (stream, addr) = listener.accept().await?;
-        info!("Client {:?} connected",addr);
+        info!("Client {:?} connected", addr);
         tokio::spawn(async move {
-            let mut stream = AsyncProstStream::<_, CommandRequest, CommandResponse, _>::from(stream).for_async();
-            while let Some(Ok(msg)) = stream.next().await? {
+            let mut stream =
+                AsyncProstStream::<_, CommandRequest, CommandResponse, _>::from(stream).for_async();
+            while let Some(Ok(msg)) = stream.next().await {
                 info!("Got a new command: {:?}", msg);
-                let mut resp = CommandResponse::default();
-                resp.status = 404;
-                resp.message = "Not Found".to_string();
+                let resp = CommandResponse {
+                    status: 404,
+                    message: "Not found".to_string(),
+                    ..Default::default()
+                };
                 stream.send(resp).await.unwrap();
             }
-            info!("Client {:?} disconnected",addr);
+            info!("Client {:?} disconnected", addr);
         });
     }
 }
