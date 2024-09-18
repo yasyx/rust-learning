@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-
+sled = "0.34.7" # kv store
 bytes = "1" # 高效处理网络 buffer 的库
 dashmap = "4" # 并发 HashMap
 http = "0.2" # 我们使用 HTTP status code 所以引入这个类型库
@@ -13,6 +13,7 @@ thiserror = "1" # 错误定义和处理
 tracing = "0.1" # 日志处理
 
 [dev-dependencies]
+tempfile = "3.12.0"
 anyhow = "1" # 错误处理
 async-prost = "0.3" # 支持把 protobuf 封装成 TCP frame
 futures = "0.3" # 提供 Stream trait

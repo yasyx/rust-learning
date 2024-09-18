@@ -1,6 +1,5 @@
 use crate::*;
 
-
 impl CommandService for Hget {
     fn execute(self, store: &impl Storage) -> CommandResponse {
         match store.get(&self.table, &self.key) {
@@ -33,11 +32,42 @@ impl CommandService for Hset {
     }
 }
 
+impl CommandService for Hmset {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        let pairs = self.pairs;
+        let table = self.table;
+        let response = pairs
+            .into_iter()
+            .map(|pair| {
+                let result = store.set(&table, pair.key, pair.value.unwrap_or_default());
+                match result {
+                    Ok(Some(v)) => v,
+                    _ => Value::default(),
+                }
+            })
+            .collect::<Vec<_>>()
+            .into();
+        response
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::command_request::RequestData;
 
+    #[test]
+    fn hmset_should_work() {
+        let store = MemTable::new();
+        set_key_pairs("t1", vec![("u1", "world")], &store);
+        let pairs = vec![
+            Kvpair::new("u1", 10.1.into()),
+            Kvpair::new("u2", 8.1.into()),
+        ];
+        let cmd = CommandRequest::new_hmset("t1", pairs);
+        let res = dispatch(cmd, &store);
+        assert_res_ok(res, &["world".into(), Value::default()], &[]);
+    }
     #[test]
     fn hset_should_work() {
         let store = MemTable::new();
@@ -87,6 +117,7 @@ mod tests {
             RequestData::Hget(v) => v.execute(store),
             RequestData::Hgetall(v) => v.execute(store),
             RequestData::Hset(v) => v.execute(store),
+            RequestData::Hmset(v) => v.execute(store),
             _ => todo!()
         }
     }
@@ -106,4 +137,13 @@ mod tests {
         assert_eq!(res.values, &[]);
         assert_eq!(res.pairs, &[]);
     }
+}
+
+fn set_key_pairs<T: Into<Value>>(table: &str, pairs: Vec<(&str, T)>, store: &impl Storage) {
+    pairs
+        .into_iter()
+        .map(|(k, v)| CommandRequest::new_hset(table, k, v.into()))
+        .for_each(|cmd| {
+            dispatch(cmd, store);
+        });
 }
